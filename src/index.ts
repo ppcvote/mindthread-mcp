@@ -474,6 +474,149 @@ server.tool(
   }
 );
 
+// ── Tool: create_experiment ──────────────────────────────────────────────────
+
+server.tool(
+  "mindthread_create_experiment",
+  "Create an A/B test: same topic, different formulas, published to one account. After 3 days, the system compares engagement metrics and picks the winner.",
+  {
+    topic: z.string().describe("The topic to test (same topic will be generated with each formula)"),
+    account_id: z.string().describe("Account ID (from mindthread_list_accounts)"),
+    formulas: z
+      .array(z.enum(["controversial_opinion", "curiosity_hook", "binary_choice", "personal_experience", "list_format"]))
+      .min(2)
+      .max(5)
+      .describe("2-5 different formulas to test against each other"),
+  },
+  async ({ topic, account_id, formulas }) => {
+    const data = await apiCall("POST", "/experiments", {
+      topic,
+      account_id,
+      formulas,
+    }) as {
+      ok: boolean;
+      data: {
+        experiment_id: string;
+        topic: string;
+        status: string;
+        variants: Array<{ variant_id: string; formula: string; post_id: string; threads_post_id: string }>;
+        measure_days: number;
+        ends_at: string;
+      };
+    };
+
+    const variantLines = data.data.variants
+      .map((v, i) => `  ${i + 1}. ${v.formula} → Post ${v.post_id}`)
+      .join("\n");
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `A/B Test created!\n\nExperiment: ${data.data.experiment_id}\nTopic: ${data.data.topic}\nStatus: ${data.data.status}\nResults ready: ${data.data.ends_at}\n\nVariants:\n${variantLines}`,
+        },
+      ],
+    };
+  }
+);
+
+// ── Tool: list_experiments ──────────────────────────────────────────────────
+
+server.tool(
+  "mindthread_list_experiments",
+  "List A/B test experiments with their status and results",
+  {
+    status: z
+      .enum(["active", "completed", "cancelled"])
+      .optional()
+      .describe("Filter by status (optional)"),
+  },
+  async ({ status }) => {
+    const path = status ? `/experiments?status=${status}` : "/experiments";
+    const data = await apiCall("GET", path) as {
+      ok: boolean;
+      data: {
+        experiments: Array<{
+          experiment_id: string;
+          topic: string;
+          status: string;
+          formulas: string[];
+          winner_formula: string | null;
+          ends_at: string | null;
+        }>;
+      };
+    };
+
+    if (!data.data.experiments.length) {
+      return { content: [{ type: "text" as const, text: "No experiments found." }] };
+    }
+
+    const lines = data.data.experiments.map((e) => {
+      const winner = e.winner_formula ? ` → Winner: ${e.winner_formula}` : "";
+      return `[${e.status}] ${e.topic} (${e.formulas.join(" vs ")})${winner}`;
+    });
+
+    return {
+      content: [{ type: "text" as const, text: lines.join("\n\n") }],
+    };
+  }
+);
+
+// ── Tool: get_experiment ────────────────────────────────────────────────────
+
+server.tool(
+  "mindthread_get_experiment",
+  "Get detailed results of an A/B test experiment, including per-variant metrics and winner",
+  {
+    experiment_id: z.string().describe("Experiment ID"),
+  },
+  async ({ experiment_id }) => {
+    const data = await apiCall("GET", `/experiments/${experiment_id}`) as {
+      ok: boolean;
+      data: {
+        experiment_id: string;
+        topic: string;
+        status: string;
+        variants: Array<{
+          formula: string;
+          metrics: { views: number; likes: number; replies: number; engagement_rate: number } | null;
+        }>;
+        winner_formula: string | null;
+        confidence: number | null;
+        insights: string | null;
+      };
+    };
+
+    const d = data.data;
+    const variantLines = d.variants.map((v) => {
+      if (v.metrics) {
+        return `  ${v.formula}: ${v.metrics.views} views, ${v.metrics.likes} likes, ${v.metrics.replies} replies (${v.metrics.engagement_rate}% engagement)`;
+      }
+      return `  ${v.formula}: metrics pending...`;
+    });
+
+    const parts = [
+      `Experiment: ${d.experiment_id}`,
+      `Topic: ${d.topic}`,
+      `Status: ${d.status}`,
+      "",
+      "Variants:",
+      ...variantLines,
+    ];
+
+    if (d.winner_formula) {
+      parts.push("", `Winner: ${d.winner_formula} (${d.confidence}% confidence)`);
+    }
+    if (d.insights) {
+      parts.push("", `Insights: ${d.insights}`);
+    }
+
+    return {
+      content: [{ type: "text" as const, text: parts.join("\n") }],
+    };
+  }
+);
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 async function main() {
