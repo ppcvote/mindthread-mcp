@@ -1,0 +1,26 @@
+{
+  "name": "@ultralab/mindthread-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for MindThread — AI-powered Threads automation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mindthread-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": ["mcp", "threads", "social-media", "automation", "ai"],
+  "author": "Ultra Lab <contact@ultralab.tw>",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.15.0"
+  }
+}
