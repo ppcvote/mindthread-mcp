@@ -1,0 +1,96 @@
+{
+  "name": "MindThread: schedule a Threads post",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "6f1d2a40-0001-4c1e-9d3a-mindthread01",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://mindthread.tw/api/v1/accounts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "6f1d2a40-0002-4c1e-9d3a-mindthread02",
+      "name": "List accounts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "MindThread API key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mindthread.tw/api/v1/content/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"account_id\": \"{{ $json.data.accounts[0].id }}\",\n  \"text\": \"Scheduled from n8n with MindThread\",\n  \"publish_at\": \"{{ $now.plus({ hours: 1 }).toISO() }}\"\n}",
+        "options": {}
+      },
+      "id": "6f1d2a40-0003-4c1e-9d3a-mindthread03",
+      "name": "Schedule post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "MindThread API key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "List accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List accounts": {
+      "main": [
+        [
+          {
+            "node": "Schedule post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

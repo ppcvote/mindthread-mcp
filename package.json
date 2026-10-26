@@ -1,26 +1,54 @@
 {
-  "name": "@ultralab/mindthread-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for MindThread — AI-powered Threads automation",
+  "name": "mindthread-mcp",
+  "version": "0.2.0",
+  "description": "Threads scheduler for AI agents: MindThread's MCP server over stdio (write, schedule and publish Threads posts, review replies, read insights).",
+  "mcpName": "io.github.ppcvote/mindthread",
   "type": "module",
-  "main": "dist/index.js",
   "bin": {
     "mindthread-mcp": "dist/index.js"
   },
+  "files": [
+    "dist/*.js",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js"
+    "test": "npm run build && node --test test/bridge.test.mjs test/server-json.test.mjs",
+    "test:live": "npm run build && node --test test/live.test.mjs",
+    "tools-table": "node scripts/tools-table.mjs",
+    "prepublishOnly": "npm test && npm run test:live"
   },
-  "keywords": ["mcp", "threads", "social-media", "automation", "ai"],
-  "author": "Ultra Lab <contact@ultralab.tw>",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "threads",
+    "threads-api",
+    "meta-threads",
+    "social-media",
+    "scheduler",
+    "ai-agent",
+    "claude",
+    "cursor",
+    "mindthread"
+  ],
+  "author": "Ultra Lab <contact@ultralab.tw> (https://ultralab.tw)",
   "license": "MIT",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1"
+  "homepage": "https://github.com/ppcvote/mindthread-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppcvote/mindthread-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ppcvote/mindthread-mcp/issues"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "tsx": "^4.19.0",
-    "@types/node": "^22.15.0"
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.3"
   }
 }

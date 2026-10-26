@@ -1,0 +1,62 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ppcvote/mindthread",
+  "title": "MindThread",
+  "description": "Threads scheduler for AI agents: write, schedule and publish posts, review replies, read insights.",
+  "websiteUrl": "https://mindthread.tw/developers",
+  "repository": {
+    "url": "https://github.com/ppcvote/mindthread-mcp",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "icons": [
+    {
+      "src": "https://mindthread.tw/pwa-512x512.png",
+      "mimeType": "image/png",
+      "sizes": ["512x512"]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mindthread-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MINDTHREAD_API_KEY",
+          "description": "MindThread API key (mt_live_… or mt_test_… for the free sandbox). Create one at https://mindthread.tw/settings under API keys.",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mindthread.tw/api/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer followed by a MindThread API key. Leave it out if your client signs in with OAuth (Claude, ChatGPT).",
+          "isRequired": false,
+          "isSecret": true,
+          "value": "Bearer {api_key}",
+          "variables": {
+            "api_key": {
+              "description": "MindThread API key (mt_live_… or mt_test_…)",
+              "isRequired": true,
+              "isSecret": true,
+              "format": "string"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
