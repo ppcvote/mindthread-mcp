@@ -195,7 +195,7 @@ Requires Node.js 18.17 or newer. No runtime dependencies.
 - **"MindThread rejected the key"**: the key is wrong, revoked or disabled. Create a new one in Settings → API keys.
 - **`approval_required`**: working as intended. Open the link the agent shows you, confirm, and the post goes out.
 - **`insufficient_scope`**: that permission is set to `deny` for this key. The error's `fix` field names the setting to change.
-- **`rate_limit_exceeded`**: daily or per-minute limit reached; the error says when it resets.
+- **`rate_limit_exceeded`**: daily or per-minute limit reached; the error says when it resets. Every tool call counts against the key's daily quota, polls included (`list_events`, `list_pending_replies`): on the free plan (50 calls a day) poll every 30 minutes or slower, or use a webhook. After a daily limit the bridge holds tool calls until the reset (00:00 Asia/Taipei) and answers them itself with the same error (`held_locally: true`), so an agent loop cannot keep hitting MindThread; `get_playbook`, `list_formulas`, `get_approval` and `disable_this_key` still go through.
 - Logs go to stderr (Claude Desktop: Settings → Developer → Open Logs Folder). stdout carries only MCP messages.
 
 ## Also available

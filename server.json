@@ -8,7 +8,7 @@
     "url": "https://github.com/ppcvote/mindthread-mcp",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "icons": [
     {
       "src": "https://mindthread.tw/pwa-512x512.png",
@@ -21,7 +21,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "mindthread-mcp",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },

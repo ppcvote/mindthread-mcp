@@ -1,6 +1,6 @@
 {
   "name": "mindthread-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Threads scheduler for AI agents: MindThread's MCP server over stdio (write, schedule and publish Threads posts, review replies, read insights).",
   "mcpName": "io.github.ppcvote/mindthread",
   "type": "module",

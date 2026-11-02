@@ -169,3 +169,67 @@ test("refuses a non-https endpoint and prints help/version", async () => {
   await new Promise((r) => v.on("close", r));
   assert.match(out.trim(), /^\d+\.\d+\.\d+$/);
 });
+
+// ── 0.2.1: after a daily 429 the bridge stops sending tool calls until reset_at (every call before then fails too) ──
+import { dailyLimitHold, taipeiTime } from "../dist/bridge.js";
+
+/** Start the bridge and send lines one at a time, each after the previous answer arrived */
+async function stepBridge(env, lines) {
+  const child = spawn(process.execPath, [BIN], { env: { ...process.env, MINDTHREAD_API_KEY: "", ...env }, stdio: ["pipe", "pipe", "pipe"] });
+  let buf = "", err = "";
+  const got = [];
+  const waiters = [];
+  child.stdout.on("data", (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l) { got.push(JSON.parse(l)); waiters.splice(0).forEach((w) => w()); } }
+  });
+  child.stderr.on("data", (d) => (err += d));
+  for (const l of lines) {
+    const before = got.length;
+    child.stdin.write(JSON.stringify(l) + "\n");
+    if (l.id !== undefined) while (got.length === before) await new Promise((r) => waiters.push(r));
+  }
+  child.stdin.end();
+  await new Promise((r) => child.on("close", r));
+  return { messages: got, stderr: err };
+}
+
+test("dailyLimitHold reads a daily rate_limit_exceeded tool result; other errors do not hold", () => {
+  const now = Date.parse("2026-11-02T03:00:00Z");
+  const err = { code: "rate_limit_exceeded", window: "daily", limit: 50, used: 50, reset_at: "2026-11-02T16:00:00Z", retry_after_seconds: 46800 };
+  const h = dailyLimitHold({ result: { isError: true, structuredContent: { error: err } } }, now);
+  assert.equal(h.untilMs, Date.parse("2026-11-02T16:00:00Z"));
+  assert.equal(dailyLimitHold({ result: { isError: true, structuredContent: { error: { ...err, window: "minute" } } } }, now), null);
+  assert.equal(dailyLimitHold({ result: { isError: false, structuredContent: { error: err } } }, now), null);
+  assert.equal(dailyLimitHold({ result: { isError: true, structuredContent: { error: { ...err, reset_at: "2026-11-02T02:00:00Z", retry_after_seconds: 0 } } } }, now), null, "already reset");
+  assert.equal(taipeiTime(Date.parse("2026-11-02T16:00:00Z")), "2026-11-03 00:00 Asia/Taipei");
+});
+
+test("after a daily 429, tool calls are answered locally until reset_at; exempt tools and tools/list still go through", async () => {
+  const reset = new Date(Date.now() + 3600_000).toISOString();
+  const limited = { code: "rate_limit_exceeded", message: "Daily API limit reached.", window: "daily", limit: 50, used: 50, reset_at: reset, retry_after_seconds: 3600 };
+  const m = await mockServer((msg) => (msg && msg.method === "tools/call" && msg.params.name === "list_events"
+    ? { body: { jsonrpc: "2.0", id: msg.id, result: { isError: true, content: [{ type: "text", text: JSON.stringify({ error: limited }) }], structuredContent: { error: limited } } } }
+    : null));
+  try {
+    const call = (id, name) => ({ jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: {} } });
+    const r = await stepBridge({ MINDTHREAD_MCP_URL: m.url, MINDTHREAD_API_KEY: FAKE_KEY }, [
+      INIT, call(2, "list_events"), call(3, "list_events"), call(4, "get_me"), call(5, "get_approval"), { jsonrpc: "2.0", id: 6, method: "tools/list" },
+    ]);
+    const byId = Object.fromEntries(r.messages.map((x) => [x.id, x]));
+    const sent = m.calls.map((c) => c.body?.params?.name ?? c.body?.method);
+    assert.deepEqual(sent, ["initialize", "list_events", "get_approval", "tools/list"], "ids 3 and 4 never reached MindThread");
+    for (const id of [3, 4]) {
+      assert.equal(byId[id].result.isError, true);
+      const e = byId[id].result.structuredContent.error;
+      assert.equal(e.code, "rate_limit_exceeded");
+      assert.equal(e.window, "daily");
+      assert.equal(e.held_locally, true);
+      assert.equal(e.reset_at, reset);
+      assert.ok(e.retry_after_seconds > 3500 && e.retry_after_seconds <= 3600);
+      assert.match(e.message, /did not send this call: every call before .* Asia\/Taipei \(in (0h 59m|1h 0m)\) would get 429 too/);
+    }
+    assert.match(r.stderr, /Daily API limit reached \(50\/50\)\. Holding tool calls until .* Asia\/Taipei, when the quota resets/);
+  } finally { await m.close(); }
+});
