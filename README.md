@@ -15,6 +15,7 @@ claude mcp add --transport http mindthread https://mindthread.tw/api/mcp --heade
 - **Stay on-brand in code**: content rules (length, banned phrases, no hashtags, only numbers from your fact list) are enforced by the server, not just suggested in a prompt.
 - **Reply where it matters**: cloud patrol searches Threads for your keywords and drafts replies; your agent lists the drafts and approves or rejects each one.
 - **Measure**: views, likes, replies and followers per account, plus the results of patrol replies.
+- **Research and plan** (MindThread API 1.22.0): rank the best posts of an account you connected (`get_top_posts`; the Threads API only returns insights for the authorized user's own posts, so other people's accounts cannot be read) and keep brand, content and content-map documents on MindThread (`save_brand_doc`, `get_brand_doc`, last 20 versions kept).
 - **Stay in control**: every key has per-permission `allow`, `ask` or `deny`. With `ask`, the post waits until you confirm it on mindthread.tw, and the agent gets a link to hand you instead of posting.
 
 ## Three-minute setup
@@ -120,6 +121,8 @@ Without a key, `initialize`, `tools/list`, `get_playbook` and `list_formulas` st
 - "Queue posts 1 and 3; schedule post 2 for Friday 20:00." (`add_library`, `publish`)
 - "Any drafted replies waiting for me? Show them one by one." (`list_pending_replies`, `approve_pending_reply`, `reject_pending_reply`)
 - "How did @mybrand do in the last 7 days compared with the 7 days before?" (`analytics_insights`)
+- "Rank the 20 best posts of @mybrand by engagement and summarize my core ideas and voice into a content document." (`get_top_posts`, `save_brand_doc`)
+- Three Traditional Chinese prompt templates (best posts, brand interview, content map): [mindthread-cli README](https://github.com/ppcvote/mindthread-cli#research-plan-and-schedule-in-claude) and [mindthread.tw/developers#prompt-templates](https://mindthread.tw/developers#prompt-templates).
 - "Set cloud patrol keywords to 'first home', 'mortgage', 'rent vs buy', at most 10 replies a day, and hold every reply for my review." (`set_cloud_patrol`)
 
 ## Tools
@@ -218,6 +221,8 @@ MindThread 是給 AI agent 用的 Threads 排程器。接上之後，Claude、Cu
 3. 對 AI 說：「列出我的 MindThread 帳號，幫我寫一篇介紹我為什麼創業的短文，給我看過之後，排在明天早上 9 點發。」
 
 你保有控制權：每把金鑰的每項權限都能設成「允許」「先問我」「拒絕」。設成「先問我」時，AI 會拿到一個確認連結交給你，你在 mindthread.tw 按下確認才會發出。字數、禁用詞、只能用你列的數字這些內容規則，由伺服器以程式檢查，可以設成直接擋下。
+
+在 Claude 裡直接研究、規劃、排程你的 Threads：把 MindThread MCP 接上 Claude 或 ChatGPT 之後，get_top_posts 會從你自己連結的帳號抓出互動最好的貼文（Threads 官方 API 只開放讀授權者本人的成效，讀不到別人的帳號），save_brand_doc 和 get_brand_doc 幫你把品牌文件、內容文件、內容地圖存在 MindThread（保留最近 20 版），generate_posts 照你的人設起草，schedule_text 或 add_library 排進發文時段。整理、規劃、起草、排程，都在同一段對話裡完成；每一步要不要存、要不要排，由你決定。三個繁中提示詞範本（整理最佳貼文、品牌訪談、內容地圖）見 [mindthread.tw/developers#prompt-templates](https://mindthread.tw/developers#prompt-templates)。
 
 ## License
 
