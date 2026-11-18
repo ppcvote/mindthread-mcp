@@ -39,6 +39,8 @@ There are two ways to connect, and both reach the same server:
 - **Remote (recommended)**: point the client at `https://mindthread.tw/api/mcp`. Nothing to install.
 - **Local stdio**: run this package with `npx -y mindthread-mcp`. Use it for clients that only start servers with a command. It forwards every message to the same endpoint, so the tools are always identical.
 
+> Version note: npm currently has 0.2.0, and this README describes 0.2.1, which is not published yet. The tools are the same on both because they come from the hosted server. The only difference: 0.2.0 does not hold tool calls locally after a daily rate limit (`held_locally`), so each further call still reaches MindThread and gets 429.
+
 ### Claude Code
 
 ```bash
