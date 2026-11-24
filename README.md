@@ -1,5 +1,7 @@
 # MindThread MCP: the Threads scheduler built for AI agents
 
+[![ppcvote/mindthread-mcp MCP server](https://glama.ai/mcp/servers/ppcvote/mindthread-mcp/badges/score.svg)](https://glama.ai/mcp/servers/ppcvote/mindthread-mcp)
+
 Let Claude, Cursor or any MCP client write, schedule and publish Threads posts, review drafted replies and read insights for your accounts, through Meta's official Threads API. 40+ tools, a free sandbox key, and permission controls so the agent asks before it posts.
 
 ```bash
